@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2003-2005 Pontus Fuchs, Giridhar Pemmasani
+ *  Copyright (C) 2015 Philippe <sinetek> Michaud-Boudreault
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -892,40 +893,29 @@ wstdcall void WIN_FUNC(NdisInitializeReadWriteLock,1)
 	return;
 }
 
-/* read/write locks are implemented in a rather simplistic way - we
- * should probably use Linux's rw_lock implementation */
-
 wstdcall void WIN_FUNC(NdisAcquireReadWriteLock,3)
 	(struct ndis_rw_lock *rw_lock, BOOLEAN write,
 	 struct lock_state *lock_state)
 {
 	if (write) {
-		while (1) {
-			if (cmpxchg(&rw_lock->count, 0, -1) == 0)
-				return;
-			while (rw_lock->count)
-				cpu_relax();
-		}
-		return;
-	}
-	while (1) {
-		typeof(rw_lock->count) count;
-		while ((count = rw_lock->count) < 0)
-			cpu_relax();
-		if (cmpxchg(&rw_lock->count, count, count + 1) == count)
-			return;
+//		KeAcquireSpinLock(&rw_lock->klock, &lock_state->irql);
+		lock_state->irql = nt_spin_lock_irql(&rw_lock->klock, DISPATCH_LEVEL);
+		rw_lock->reserved[0]++;
+	} else {
+		rw_lock->reserved[1]++;
 	}
 }
 
 wstdcall void WIN_FUNC(NdisReleaseReadWriteLock,2)
 	(struct ndis_rw_lock *rw_lock, struct lock_state *lock_state)
 {
-	if (rw_lock->count > 0)
-		pre_atomic_add(rw_lock->count, -1);
-	else if (rw_lock->count == -1)
-		rw_lock->count = 0;
-	else
-		WARNING("invalid state: %d", rw_lock->count);
+	if(rw_lock->reserved[0]) {
+		rw_lock->reserved[0]--;
+//		KeReleaseSpinLock(&rw_lock->klock, lock_state->irql);
+		nt_spin_unlock_irql(&rw_lock->klock, lock_state->irql);
+	} else {
+		rw_lock->reserved[1]--;
+	}
 }
 
 wstdcall NDIS_STATUS WIN_FUNC(NdisMAllocateMapRegisters,5)
