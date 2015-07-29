@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2003-2005 Pontus Fuchs, Giridhar Pemmasani
+ *  Copyright (C) 2015 Philippe <sinetek> Michaud-Boudreault
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -378,9 +379,19 @@ static inline void reinit_completion(struct completion *x)
 
 extern u64 wrap_ticks_to_boot;
 
+/*
+ * Return the number of 100 ns groups since
+ * January 1st, 1601.
+ */
 static inline u64 ticks_1601(void)
 {
-	return wrap_ticks_to_boot + (u64)jiffies * TICKSPERJIFFY;
+	u64 time;
+	struct timespec ts;
+	const u64 from_1601_to_1970 = 116444736000000000LLU;
+
+	getnstimeofday(&ts);
+	time = from_1601_to_1970 + ts.tv_nsec / 100 + ts.tv_sec * 10000000;
+	return time;
 }
 
 typedef void (*generic_func)(void);
