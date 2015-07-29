@@ -1839,6 +1839,12 @@ void free_mdl(struct mdl *mdl)
 	return;
 }
 
+wstdcall void* WIN_FUNC(IoCreateSynchronizationEvent,2)
+	(char *event_name, void *event_handle)
+{
+	panic("TODO");
+}
+
 wstdcall void WIN_FUNC(IoBuildPartialMdl,4)
 	(struct mdl *source, struct mdl *target, void *virt, ULONG length)
 {
