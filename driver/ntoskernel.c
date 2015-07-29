@@ -1262,6 +1262,14 @@ wstdcall void WIN_FUNC(KeInitializeMutex,2)
 	EVENTEXIT(return);
 }
 
+wstdcall void WIN_FUNC(KeInitializeGuardedMutex,1)
+	(struct nt_mutex *mutex)
+{
+	EVENTENTER("%p", mutex);
+	KeInitializeMutex(mutex, 0);
+	EVENTEXIT(return);
+}
+
 wstdcall LONG WIN_FUNC(KeReleaseMutex,2)
 	(struct nt_mutex *mutex, BOOLEAN wait)
 {
