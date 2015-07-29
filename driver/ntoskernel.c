@@ -97,7 +97,7 @@ static void update_user_shared_data_proc(unsigned long data)
 	 * intervals seem to work (tried up to 50ms) */
 	*((ULONG64 *)&kuser_shared_data.system_time) = ticks_1601();
 	*((ULONG64 *)&kuser_shared_data.interrupt_time) =
-		jiffies * TICKSPERSEC / HZ;
+		ktime_to_ns(ktime_get()) / 100;
 	*((ULONG64 *)&kuser_shared_data.tick) = jiffies;
 
 	mod_timer(&shared_data_timer, jiffies + MSEC_TO_HZ(30));
