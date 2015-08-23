@@ -31,8 +31,8 @@
 #include <syslog.h>
 #include <stdlib.h>
 
-#include <linux/major.h>
-#include <linux/ioctl.h>
+//#include <linux/major.h>
+#include <sys/ioctl.h>
 
 #include "loader.h"
 
@@ -496,12 +496,13 @@ static int get_ioctl_device(void)
 	}
 
 	unlink(ioctl_file);
+#if 0
 	if (mknod(ioctl_file, S_IFCHR | 0600, MISC_MAJOR << 8 | minor_dev)) {
 		ERROR("couldn't create file %s: %s",
 		      ioctl_file, strerror(errno));
 		return -1;
 	}
-
+#endif
 	fd = open(ioctl_file, O_RDONLY);
 	unlink(ioctl_file);
 
